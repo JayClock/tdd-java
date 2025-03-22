@@ -30,7 +30,13 @@ public class ArgsTest {
     static record IntOption(@Option("p") int port) {
     }
 
-    // TODO: String -d /user/logs
+    @Test
+    public void should_parse_string_as_option_value() {
+        StringOption option = Args.parse(StringOption.class, "-d", "/user/logs");
+        assertEquals(option.directory(), "/user/logs");
+    }
+    static record StringOption(@Option("d") String directory) {}
+
     // TODO: multi options: -l -p 8080 -d /user/logs
     // sad path
     // TODO: -bool -l t
