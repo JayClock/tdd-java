@@ -21,7 +21,15 @@ public class ArgsTest {
     static record BooleanOption(@Option("l") boolean logging) {
     }
 
-    // TODO: Integer -p 8080
+    @Test
+    public void should_parse_int_as_option_value() {
+        IntOption option = Args.parse(IntOption.class, "-p", "8080");
+        assertEquals(option.port(), 8080);
+    }
+
+    static record IntOption(@Option("p") int port) {
+    }
+
     // TODO: String -d /user/logs
     // TODO: multi options: -l -p 8080 -d /user/logs
     // sad path
