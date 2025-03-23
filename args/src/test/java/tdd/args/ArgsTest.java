@@ -49,11 +49,9 @@ public class ArgsTest {
     }
 
     // sad path
-    // TODO: -bool -l t
     // TODO: -int -p / -p 8080 8080
     // TODO: -string -d / -d /user/logs/user/vars
     // default value
-    // TODO: -bool : false
     // TODO: -int: 0
     // TODO: -sting ""
 
