@@ -1,9 +1,9 @@
 package tdd.args;
 
-public class TooManyArgumentsException extends RuntimeException {
+public class InsufficientArgumentsException extends RuntimeException {
     private final String option;
 
-    public TooManyArgumentsException(String option) {
+    public InsufficientArgumentsException(String option) {
         this.option = option;
     }
 
