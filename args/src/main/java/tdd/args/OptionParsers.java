@@ -5,21 +5,16 @@ import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.IntStream;
 
-class SingleValueOptionParser<T> implements OptionParser<T> {
-    Function<String, T> valueParser;
-    T defaultValue;
-
-    public SingleValueOptionParser(T defaultValue, Function<String, T> valueParser) {
-        this.defaultValue = defaultValue;
-        this.valueParser = valueParser;
+class OptionParsers<T> {
+    public static OptionParser<Boolean> bool() {
+        return ((arguments, option) -> values(arguments, option, 0).isPresent());
     }
 
-    @Override
-    public T parse(List<String> arguments, Option option) {
-        return values(arguments, option, 1).map(it -> parseValue(option, it.getFirst())).orElse(defaultValue);
+    public static <T> OptionParser<T> unary(T defaultValue, Function<String, T> valueParser) {
+        return ((arguments, option) -> values(arguments, option, 1).map(it -> parseValue(option, it.getFirst(), valueParser)).orElse(defaultValue));
     }
 
-    public static Optional<List<String>> values(List<String> arguments, Option option, int expectedSize) {
+    private static Optional<List<String>> values(List<String> arguments, Option option, int expectedSize) {
         int index = arguments.indexOf("-" + option.value());
         if (index == -1) return Optional.empty();
         List<String> values = values(arguments, index);
@@ -28,7 +23,7 @@ class SingleValueOptionParser<T> implements OptionParser<T> {
         return Optional.of(values);
     }
 
-    private T parseValue(Option option, String value) {
+    private static <T> T parseValue(Option option, String value, Function<String, T> valueParser) {
         return valueParser.apply(value);
     }
 
