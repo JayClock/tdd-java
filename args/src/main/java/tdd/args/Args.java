@@ -13,6 +13,8 @@ public class Args {
             Constructor<?> constructor = optionsClass.getDeclaredConstructors()[0];
             Object[] values = Arrays.stream(constructor.getParameters()).map(it -> parseOption(it, arguments)).toArray();
             return (T) constructor.newInstance(values);
+        } catch (IllegalOptionException e) {
+            throw e;
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -24,6 +26,9 @@ public class Args {
             String.class, new SingleValueOptionParser<>("", String::valueOf));
 
     private static Object parseOption(Parameter parameter, List<String> arguments) {
+        if (!parameter.isAnnotationPresent(Option.class)) {
+            throw new IllegalOptionException(parameter.getName());
+        }
         Option option = parameter.getAnnotation(Option.class);
         Class<?> type = parameter.getType();
         OptionParser parser = PARSERS.get(type);

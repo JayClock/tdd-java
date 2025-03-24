@@ -17,12 +17,16 @@ public class ArgsTest {
     static record MultiOptions(@Option("l") boolean logging, @Option("p") int port, @Option("d") String directory) {
     }
 
-    // sad path
-    // TODO: -int -p / -p 8080 8080
-    // TODO: -string -d / -d /user/logs/user/vars
-    // default value
-    // TODO: -int: 0
-    // TODO: -sting ""
+    @Test
+    public void should_throw_illegal_option_exception_if_annotation_not_present() {
+        IllegalOptionException e = assertThrows(IllegalOptionException.class, () -> Args.parse(OptionWithoutAnnotation.class, "-l", "-p", "8080", "-d", "/user/logs"));
+        assertEquals("port", e.getParameter());
+    }
+
+
+    static record OptionWithoutAnnotation(@Option("l") boolean logging, int port, @Option("d") String directory) {
+    }
+
 
     @Test
     @Disabled
