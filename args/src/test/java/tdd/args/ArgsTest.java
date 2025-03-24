@@ -7,22 +7,6 @@ import static org.junit.jupiter.api.Assertions.*;
 
 public class ArgsTest {
     @Test
-    public void should_parse_int_as_option_value() {
-        IntOption option = Args.parse(IntOption.class, "-p", "8080");
-        assertEquals(option.port(), 8080);
-    }
-
-    static record IntOption(@Option("p") int port) {
-    }
-
-    @Test
-    public void should_parse_string_as_option_value() {
-        StringOption option = Args.parse(StringOption.class, "-d", "/user/logs");
-        assertEquals(option.directory(), "/user/logs");
-    }
-    static record StringOption(@Option("d") String directory) {}
-
-    @Test
     public void should_parse_multiple_options() {
         MultiOptions options = Args.parse(MultiOptions.class, "-l", "-p", "8080", "-d", "/user/logs");
         assertTrue(options.logging());
