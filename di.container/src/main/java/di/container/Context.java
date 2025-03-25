@@ -4,10 +4,11 @@ import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 
 import java.lang.reflect.Constructor;
-import java.lang.reflect.Parameter;
+import java.lang.reflect.InvocationTargetException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import static java.util.Arrays.stream;
@@ -24,11 +25,10 @@ public class Context {
         providers.put(type, (Provider<Type>) () -> {
             try {
                 Object[] dependencies = stream(injectConstructor.getParameters())
-                        .map(Parameter::getType)
-                        .map(this::get)
-                        .toArray();
+                        .map(p -> get(p.getType()).orElseThrow(DependencyNotFoundException::new))
+                        .toArray(Object[]::new);
                 return (Type) injectConstructor.newInstance(dependencies);
-            } catch (Exception e) {
+            } catch (InvocationTargetException | InstantiationException | IllegalAccessException e) {
                 throw new RuntimeException(e);
             }
         });
@@ -48,7 +48,7 @@ public class Context {
         });
     }
 
-    public <Type> Type get(Class<Type> type) {
-        return (Type) providers.get(type).get();
+    public <Type> Optional<Type> get(Class<Type> type) {
+        return Optional.ofNullable(providers.get(type)).map(provider -> (Type) provider.get());
     }
 }
