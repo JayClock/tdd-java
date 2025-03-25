@@ -84,7 +84,18 @@ public class ContextTest {
         @Test
         public void should_throw_exception_if_dependency_not_found() {
             context.bind(Component.class, ComponentWithInjectConstructor.class);
-            assertThrows(DependencyNotFoundException.class, () -> context.get(Component.class));
+            DependencyNotFoundException exception = assertThrows(DependencyNotFoundException.class, () -> context.get(Component.class));
+            assertEquals(Dependency.class, exception.getDependency());
+            assertEquals(Component.class, exception.getComponent());
+        }
+
+        @Test
+        public void should_throw_exception_if_transitive_dependencies_not_found() {
+            context.bind(Component.class, ComponentWithInjectConstructor.class);
+            context.bind(Dependency.class, DependencyWithInjectConstructor.class);
+            DependencyNotFoundException exception = assertThrows(DependencyNotFoundException.class, () -> context.get(Component.class));
+            assertEquals(String.class, exception.getDependency());
+            assertEquals(Dependency.class, exception.getComponent());
         }
 
         @Test
@@ -110,7 +121,8 @@ interface Component {
 interface Dependency {
 }
 
-interface AnotherDependency {}
+interface AnotherDependency {
+}
 
 class ComponentWithDefaultConstructor implements Component {
     public ComponentWithDefaultConstructor() {
@@ -186,6 +198,7 @@ class AnotherDependencyDependentOnComponent implements AnotherDependency {
 
 class DependencyDependentOnAnotherDependency implements Dependency {
     private final AnotherDependency anotherDependency;
+
     @Inject
     public DependencyDependentOnAnotherDependency(AnotherDependency anotherDependency) {
         this.anotherDependency = anotherDependency;
