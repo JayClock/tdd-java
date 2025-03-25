@@ -58,6 +58,20 @@ public class ContextTest {
             assertNotNull(dependency);
             assertEquals("indirect dependency", ((DependencyWithInjectConstructor) dependency).getDependency());
         }
+
+        @Test
+        public void should_throw_exception_if_multi_inject_constructors_provided() {
+            assertThrows(IllegalComponentException.class, () -> {
+                context.bind(Component.class, ComponentWithMultiInjectConstructors.class);
+            });
+        }
+
+        @Test
+        public void should_throw_exception_if_no_inject_or_default_constructors_provided() {
+            assertThrows(IllegalComponentException.class, () -> {
+                context.bind(Component.class, ComponentWithNoInjectConstructorNorDefaultConstructor.class);
+            });
+        }
     }
 }
 
@@ -82,6 +96,21 @@ class ComponentWithInjectConstructor implements Component {
 
     public Dependency getDependency() {
         return dependency;
+    }
+}
+
+class ComponentWithNoInjectConstructorNorDefaultConstructor implements Component {
+    public ComponentWithNoInjectConstructorNorDefaultConstructor(String name) {
+    }
+}
+
+class ComponentWithMultiInjectConstructors implements Component {
+    @Inject
+    public ComponentWithMultiInjectConstructors(String name, Double value) {
+    }
+
+    @Inject
+    public ComponentWithMultiInjectConstructors(String name) {
     }
 }
 
