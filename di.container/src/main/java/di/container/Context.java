@@ -31,7 +31,7 @@ public class Context {
     }
 
     class ConstructorInjectionProvider<T> implements Provider<T> {
-        private Class<?> componentType;
+        private final Class<?> componentType;
         private final Constructor<T> injectConstructor;
         private boolean constructing = false;
 
@@ -42,13 +42,15 @@ public class Context {
 
         @Override
         public T get() {
-            if (constructing) throw new CyclicDependenciesFound();
+            if (constructing) throw new CyclicDependenciesFoundException(componentType);
             try {
                 constructing = true;
                 Object[] dependencies = stream(injectConstructor.getParameters())
                         .map(p -> Context.this.get(p.getType()).orElseThrow(() -> new DependencyNotFoundException(p.getType(), componentType)))
                         .toArray(Object[]::new);
                 return (T) injectConstructor.newInstance(dependencies);
+            } catch (CyclicDependenciesFoundException e) {
+                throw new CyclicDependenciesFoundException(componentType, e);
             } catch (InvocationTargetException | InstantiationException | IllegalAccessException e) {
                 throw new RuntimeException(e);
             } finally {

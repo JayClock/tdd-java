@@ -5,8 +5,10 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
 import java.util.Optional;
 
+import static java.util.Arrays.asList;
 import static org.junit.jupiter.api.Assertions.*;
 
 public class ContextTest {
@@ -102,7 +104,11 @@ public class ContextTest {
         public void should_throw_exception_if_cyclic_dependencies_found() {
             context.bind(Component.class, ComponentWithInjectConstructor.class);
             context.bind(Dependency.class, DependencyDependentOnComponent.class);
-            assertThrows(CyclicDependenciesFound.class, () -> context.get(Component.class));
+            CyclicDependenciesFoundException exception = assertThrows(CyclicDependenciesFoundException.class, () -> context.get(Component.class));
+            List<Class<?>> classes = asList(exception.getComponents());
+            assertEquals(2, classes.size());
+            assertTrue(classes.contains(Component.class));
+            assertTrue(classes.contains(Dependency.class));
         }
 
         @Test
@@ -110,7 +116,12 @@ public class ContextTest {
             context.bind(Component.class, ComponentWithInjectConstructor.class);
             context.bind(Dependency.class, DependencyDependentOnAnotherDependency.class);
             context.bind(AnotherDependency.class, AnotherDependencyDependentOnComponent.class);
-            assertThrows(CyclicDependenciesFound.class, () -> context.get(Component.class));
+            CyclicDependenciesFoundException exception = assertThrows(CyclicDependenciesFoundException.class, () -> context.get(Component.class));
+            List<Class<?>> classes = asList(exception.getComponents());
+            assertEquals(3, classes.size());
+            assertTrue(classes.contains(Component.class));
+            assertTrue(classes.contains(Dependency.class));
+            assertTrue(classes.contains(AnotherDependency.class));
         }
     }
 }
