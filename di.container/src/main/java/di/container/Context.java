@@ -22,16 +22,37 @@ public class Context {
 
     public <Type, Implementation extends Type> void bind(Class<Type> type, Class<Implementation> implementation) {
         Constructor<Implementation> injectConstructor = getInjectConstructor(implementation);
-        providers.put(type, (Provider<Type>) () -> {
+        providers.put(type, new ConstructorInjectionProvider<Implementation>(injectConstructor));
+    }
+
+
+    public <Type> Optional<Type> get(Class<Type> type) {
+        return Optional.ofNullable(providers.get(type)).map(provider -> (Type) provider.get());
+    }
+
+    class ConstructorInjectionProvider<T> implements Provider<T> {
+        private final Constructor<T> injectConstructor;
+        private boolean constructing = false;
+
+        public ConstructorInjectionProvider(Constructor<T> injectConstructor) {
+            this.injectConstructor = injectConstructor;
+        }
+
+        @Override
+        public T get() {
+            if (constructing) throw new CyclicDependenciesFound();
             try {
+                constructing = true;
                 Object[] dependencies = stream(injectConstructor.getParameters())
-                        .map(p -> get(p.getType()).orElseThrow(DependencyNotFoundException::new))
+                        .map(p -> Context.this.get(p.getType()).orElseThrow(DependencyNotFoundException::new))
                         .toArray(Object[]::new);
-                return (Type) injectConstructor.newInstance(dependencies);
+                return (T) injectConstructor.newInstance(dependencies);
             } catch (InvocationTargetException | InstantiationException | IllegalAccessException e) {
                 throw new RuntimeException(e);
+            } finally {
+                constructing = false;
             }
-        });
+        }
     }
 
     private static <Type> Constructor<Type> getInjectConstructor(Class<Type> implementation) {
@@ -46,9 +67,5 @@ public class Context {
                 throw new IllegalComponentException();
             }
         });
-    }
-
-    public <Type> Optional<Type> get(Class<Type> type) {
-        return Optional.ofNullable(providers.get(type)).map(provider -> (Type) provider.get());
     }
 }
