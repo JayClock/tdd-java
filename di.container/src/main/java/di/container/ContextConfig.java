@@ -5,10 +5,7 @@ import jakarta.inject.Inject;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Parameter;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static java.util.Arrays.stream;
@@ -30,18 +27,23 @@ public class ContextConfig {
     }
 
     public Context getContext() {
-        for (Class<?> component : dependencies.keySet()) {
-            for (Class<?> dependency : dependencies.get(component)) {
-                if (!dependencies.containsKey(dependency)) throw new DependencyNotFoundException(dependency, component);
-            }
-        }
-
+        dependencies.keySet().forEach(component -> checkDependencies(component, new Stack<>()));
         return new Context() {
             @Override
             public <Type> Optional<Type> get(Class<Type> type) {
                 return Optional.ofNullable(providers.get(type)).map(provider -> (Type) provider.get(this));
             }
         };
+    }
+
+    private void checkDependencies(Class<?> component, Stack<Class<?>> visiting) {
+        for (Class<?> dependency : dependencies.get(component)) {
+            if (!dependencies.containsKey(dependency)) throw new DependencyNotFoundException(dependency, component);
+            if (visiting.contains(dependency)) throw new CyclicDependenciesFoundException(visiting);
+            visiting.push(dependency);
+            checkDependencies(dependency, visiting);
+            visiting.pop();
+        }
     }
 
     interface ComponentProvider<T> {
@@ -51,7 +53,6 @@ public class ContextConfig {
     static class ConstructorInjectionProvider<T> implements ComponentProvider<T> {
         private final Class<?> componentType;
         private final Constructor<T> injectConstructor;
-        private boolean constructing = false;
 
         public ConstructorInjectionProvider(Class<?> componentType, Constructor<T> injectConstructor) {
             this.componentType = componentType;
@@ -60,23 +61,13 @@ public class ContextConfig {
 
         @Override
         public T get(Context context) {
-            if (constructing) throw new CyclicDependenciesFoundException(componentType);
             try {
-                constructing = true;
                 Object[] dependencies = stream(injectConstructor.getParameters())
-                        .map(p ->
-                                context.get(p.getType()).orElseThrow(
-                                        () -> new DependencyNotFoundException(componentType, p.getType())
-                                )
-                        )
+                        .map(p -> context.get(p.getType()).get())
                         .toArray(Object[]::new);
                 return (T) injectConstructor.newInstance(dependencies);
-            } catch (CyclicDependenciesFoundException e) {
-                throw new CyclicDependenciesFoundException(componentType, e);
             } catch (InvocationTargetException | InstantiationException | IllegalAccessException e) {
                 throw new RuntimeException(e);
-            } finally {
-                constructing = false;
             }
         }
     }
