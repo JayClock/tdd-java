@@ -6,9 +6,9 @@ import java.lang.reflect.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static java.util.Arrays.stream;
+import static java.util.stream.Stream.concat;
 
 class ConstructorInjectionProvider<T> implements ContextConfig.ComponentProvider<T> {
     private final Constructor<T> injectConstructor;
@@ -32,7 +32,7 @@ class ConstructorInjectionProvider<T> implements ContextConfig.ComponentProvider
                 field.set(instance, context.get(field.getType()).get());
             }
             for (Method method : injectMethods) {
-                method.invoke(instance);
+                method.invoke(instance, stream(method.getParameterTypes()).map(t -> context.get(t).get()).toArray());
             }
             return instance;
         } catch (InvocationTargetException | InstantiationException | IllegalAccessException e) {
@@ -66,6 +66,9 @@ class ConstructorInjectionProvider<T> implements ContextConfig.ComponentProvider
 
     @Override
     public List<Class<?>> getDependencies() {
-        return Stream.concat(stream(injectConstructor.getParameters()).map(Parameter::getType), injectFields.stream().map(Field::getType)).toList();
+        return concat(concat(stream(injectConstructor.getParameters()).map(Parameter::getType),
+                        injectFields.stream().map(Field::getType)),
+                injectMethods.stream().flatMap(m -> stream(m.getParameterTypes()))).toList();
     }
+
 }
