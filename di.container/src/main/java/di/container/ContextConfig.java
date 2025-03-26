@@ -4,6 +4,7 @@ import jakarta.inject.Inject;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Parameter;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -14,17 +15,27 @@ import static java.util.Arrays.stream;
 
 public class ContextConfig {
     private final Map<Class<?>, ComponentProvider<?>> providers = new HashMap<>();
+    private final Map<Class<?>, List<Class<?>>> dependencies = new HashMap<>();
 
     public <Type> void bind(Class<Type> type, Type instance) {
         providers.put(type, context -> instance);
+        dependencies.put(type, List.of());
     }
 
-    public <Type, Implementation extends Type> void bind(Class<Type> type, Class<Implementation> implementation) {
+    public <Type, Implementation extends Type>
+    void bind(Class<Type> type, Class<Implementation> implementation) {
         Constructor<Implementation> injectConstructor = getInjectConstructor(implementation);
         providers.put(type, new ConstructorInjectionProvider<Implementation>(type, injectConstructor));
+        dependencies.put(type, stream(injectConstructor.getParameters()).map(Parameter::getType).collect(Collectors.toList()));
     }
 
     public Context getContext() {
+        for (Class<?> component : dependencies.keySet()) {
+            for (Class<?> dependency : dependencies.get(component)) {
+                if (!dependencies.containsKey(dependency)) throw new DependencyNotFoundException(dependency, component);
+            }
+        }
+
         return new Context() {
             @Override
             public <Type> Optional<Type> get(Class<Type> type) {
@@ -53,10 +64,11 @@ public class ContextConfig {
             try {
                 constructing = true;
                 Object[] dependencies = stream(injectConstructor.getParameters())
-                        .map(p -> {
-                            Class<?> type = p.getType();
-                            return context.get(type).orElseThrow(() -> new DependencyNotFoundException(p.getType(), componentType));
-                        })
+                        .map(p ->
+                                context.get(p.getType()).orElseThrow(
+                                        () -> new DependencyNotFoundException(componentType, p.getType())
+                                )
+                        )
                         .toArray(Object[]::new);
                 return (T) injectConstructor.newInstance(dependencies);
             } catch (CyclicDependenciesFoundException e) {
