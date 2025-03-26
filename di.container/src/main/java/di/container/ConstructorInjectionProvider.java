@@ -4,10 +4,12 @@ import jakarta.inject.Inject;
 
 import java.lang.reflect.*;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
 import static java.util.Arrays.stream;
+import static java.util.Collections.reverse;
 import static java.util.stream.Stream.concat;
 
 class ConstructorInjectionProvider<T> implements ContextConfig.ComponentProvider<T> {
@@ -18,7 +20,7 @@ class ConstructorInjectionProvider<T> implements ContextConfig.ComponentProvider
     ConstructorInjectionProvider(Class<T> component) {
         this.injectConstructor = getInjectConstructor(component);
         this.injectFields = getInjectFields(component);
-        this.injectMethods = stream(component.getDeclaredMethods()).filter(m -> m.isAnnotationPresent(Inject.class)).toList();
+        this.injectMethods = getInjectMethods(component);
     }
 
     @Override
@@ -48,6 +50,23 @@ class ConstructorInjectionProvider<T> implements ContextConfig.ComponentProvider
             current = current.getSuperclass();
         }
         return injectFields;
+    }
+
+    private static <T> List<Method> getInjectMethods(Class<T> component) {
+        List<Method> injectMethods = new ArrayList<>();
+        Class<?> current = component;
+        while (current != Object.class) {
+            injectMethods.addAll(stream(current.getDeclaredMethods()).filter(m -> m.isAnnotationPresent(Inject.class))
+                    .filter(m -> injectMethods.stream().noneMatch(o -> o.getName().equals(m.getName()) &&
+                            Arrays.equals(o.getParameterTypes(), m.getParameterTypes())
+                    ))
+                    .filter(m -> stream(component.getDeclaredMethods()).filter(m1 -> !m1.isAnnotationPresent(Inject.class)).noneMatch(o -> o.getName().equals(m.getName()) &&
+                                    Arrays.equals(o.getParameterTypes(), m.getParameterTypes())))
+                            .toList());
+            current = current.getSuperclass();
+        }
+        reverse(injectMethods);
+        return injectMethods;
     }
 
     private <Type> Constructor<Type> getInjectConstructor(Class<Type> implementation) {
