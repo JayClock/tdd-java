@@ -2,17 +2,14 @@ package di.container;
 
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
 
 import java.util.List;
 import java.util.Optional;
 
 import static java.util.Arrays.asList;
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.eq;
 
 public class ContainerTest {
     ContextConfig config;
@@ -140,7 +137,8 @@ public class ContainerTest {
             Dependency dependency;
         }
 
-        static class SubClassWithFieldInjection extends ComponentWithFieldInjection {}
+        static class SubClassWithFieldInjection extends ComponentWithFieldInjection {
+        }
 
         @Test
         public void should_inject_dependency_via_field() {
@@ -152,7 +150,8 @@ public class ContainerTest {
             assertSame(dependency, component.dependency);
         }
 
-        @Test void should_inject_dependency_via_superclass_inject_field() {
+        @Test
+        void should_inject_dependency_via_superclass_inject_field() {
             Dependency dependency = new Dependency() {
             };
             config.bind(Dependency.class, dependency);
@@ -165,6 +164,25 @@ public class ContainerTest {
         public void should_include_field_dependency_in_dependencies() {
             ConstructorInjectionProvider<ComponentWithFieldInjection> provider = new ConstructorInjectionProvider<>(ComponentWithFieldInjection.class);
             assertArrayEquals(new Class<?>[]{Dependency.class}, provider.getDependencies().toArray(Class<?>[]::new));
+        }
+    }
+
+    @Nested
+    public class MethodInjection {
+        static class InjectMethodWithNoDependency {
+            boolean called = false;
+
+            @Inject
+            void install() {
+                called = true;
+            }
+        }
+
+        @Test
+        public void should_call_inject_method_even_if_no_dependency_declared() {
+            config.bind(InjectMethodWithNoDependency.class, InjectMethodWithNoDependency.class);
+            InjectMethodWithNoDependency component = config.getContext().get(InjectMethodWithNoDependency.class).get();
+            assertTrue(component.called);
         }
     }
 }
