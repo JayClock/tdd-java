@@ -6,6 +6,7 @@ import java.lang.reflect.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.function.BiFunction;
 import java.util.stream.Stream;
 
 import static java.util.Arrays.stream;
@@ -50,29 +51,17 @@ class InjectionProvider<T> implements ContextConfig.ComponentProvider<T> {
 
 
     private static <T> List<Field> getInjectFields(Class<T> component) {
-        List<Field> injectFields = new ArrayList<>();
-        Class<?> current = component;
-        while (current != Object.class) {
-            injectFields.addAll(injectable(current.getDeclaredFields()).toList());
-            current = current.getSuperclass();
-        }
-        return injectFields;
+        return traverse(component, (current, fields) -> injectable(current.getDeclaredFields()).toList());
     }
 
     private static <T> List<Method> getInjectMethods(Class<T> component) {
-        List<Method> injectMethods = new ArrayList<>();
-        Class<?> current = component;
-        while (current != Object.class) {
-            injectMethods.addAll(injectable(current.getDeclaredMethods())
-                    .filter(m -> isOverrideByInjectMethod(m, injectMethods))
-                    .filter(m -> isOverrideByNoInjectMethod(component, m))
-                    .toList());
-            current = current.getSuperclass();
-        }
+        List<Method> injectMethods = traverse(component, (methods, current) -> injectable(methods.getDeclaredMethods())
+                .filter(m -> isOverrideByInjectMethod(m, current))
+                .filter(m -> isOverrideByNoInjectMethod(component, m))
+                .toList());
         reverse(injectMethods);
         return injectMethods;
     }
-
 
     private static <Type> Constructor<Type> getInjectConstructor(Class<Type> implementation) {
         List<Constructor<?>> injectConstructors = injectable(implementation.getConstructors()).toList();
@@ -121,5 +110,15 @@ class InjectionProvider<T> implements ContextConfig.ComponentProvider<T> {
         } catch (NoSuchMethodException e) {
             throw new IllegalComponentException();
         }
+    }
+
+    private static <T> List<T> traverse(Class<?> component, BiFunction<Class<?>, List<T>, List<T>> finder) {
+        List<T> member = new ArrayList<>();
+        Class<?> current = component;
+        while (current != Object.class) {
+            member.addAll(finder.apply(current, member));
+            current = current.getSuperclass();
+        }
+        return member;
     }
 }
