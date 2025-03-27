@@ -23,6 +23,11 @@
     - [x] 依赖中应包含 Inject Method 声明的依赖
 #### 依赖选择
 - 对 Provider 类型的依赖
+    - [x] 从容器中取得组件的 Provider
+    - [ ] 注入构造函数中可以声明对于 Provider 的依赖
+    - [ ] 注入字段中可以声明对于 Provider 的依赖
+- 注入方法中可声明对于 Provider 的依赖对 Provider 类型的依赖
+    - [ ] 可从容器中获取依赖的 Provider
     - [ ] 注入构造函数中可以声明对于 Provider 的依赖
     - [ ] 注入字段中可以声明对于 Provider 的依赖
     - [ ] 注入方法中可声明对于 Provider 的依赖
