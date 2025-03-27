@@ -18,6 +18,9 @@ class ConstructorInjectionProvider<T> implements ContextConfig.ComponentProvider
     private final List<Method> injectMethods;
 
     ConstructorInjectionProvider(Class<T> component) {
+        if (Modifier.isAbstract(component.getModifiers())) {
+            throw new IllegalComponentException();
+        }
         this.injectConstructor = getInjectConstructor(component);
         this.injectFields = getInjectFields(component);
         this.injectMethods = getInjectMethods(component);
@@ -61,8 +64,8 @@ class ConstructorInjectionProvider<T> implements ContextConfig.ComponentProvider
                             Arrays.equals(o.getParameterTypes(), m.getParameterTypes())
                     ))
                     .filter(m -> stream(component.getDeclaredMethods()).filter(m1 -> !m1.isAnnotationPresent(Inject.class)).noneMatch(o -> o.getName().equals(m.getName()) &&
-                                    Arrays.equals(o.getParameterTypes(), m.getParameterTypes())))
-                            .toList());
+                            Arrays.equals(o.getParameterTypes(), m.getParameterTypes())))
+                    .toList());
             current = current.getSuperclass();
         }
         reverse(injectMethods);
