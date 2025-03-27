@@ -56,11 +56,15 @@ public class InjectionTest {
 
         @Nested
         class IllegalInjectionConstructors {
-
+            abstract static class AbstractComponent implements Component {
+                @Inject
+                public AbstractComponent() {
+                }
+            }
             @Test
             public void should_throw_exception_if_component_is_abstract() {
                 assertThrows(IllegalComponentException.class, () ->
-                        new ConstructorInjectionProvider<>(ContainerTest.ComponentConstruction.AbstractComponent.class));
+                        new ConstructorInjectionProvider<>(AbstractComponent.class));
             }
 
             @Test

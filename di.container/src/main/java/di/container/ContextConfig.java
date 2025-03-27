@@ -2,21 +2,13 @@ package di.container;
 
 import java.util.*;
 
+import static java.util.List.of;
+
 public class ContextConfig {
     private final Map<Class<?>, ComponentProvider<?>> providers = new HashMap<>();
 
     public <Type> void bind(Class<Type> type, Type instance) {
-        providers.put(type, new ComponentProvider<>() {
-            @Override
-            public Object get(Context context) {
-                return instance;
-            }
-
-            @Override
-            public List<Class<?>> getDependencies() {
-                return List.of();
-            }
-        });
+        providers.put(type, context -> instance);
     }
 
     public <Type, Implementation extends Type>
@@ -47,6 +39,8 @@ public class ContextConfig {
     interface ComponentProvider<T> {
         T get(Context context);
 
-        List<Class<?>> getDependencies();
+        default List<Class<?>> getDependencies() {
+            return of();
+        }
     }
 }
