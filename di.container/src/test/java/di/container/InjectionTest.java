@@ -26,6 +26,12 @@ public class InjectionTest {
     public class ConstructorInjection {
         @Nested
         class Injection {
+
+            static class ComponentWithDefaultConstructor implements Component {
+                public ComponentWithDefaultConstructor() {
+                }
+            }
+
             @Test
             public void should_call_default_constructor_if_no_inject_constructor() {
                 Component instance = new InjectionProvider<>(ComponentWithDefaultConstructor.class).get(context);
@@ -61,6 +67,7 @@ public class InjectionTest {
                 public AbstractComponent() {
                 }
             }
+
             @Test
             public void should_throw_exception_if_component_is_abstract() {
                 assertThrows(IllegalComponentException.class, () ->
@@ -73,10 +80,25 @@ public class InjectionTest {
                         new InjectionProvider<>(Component.class));
             }
 
+            static class ComponentWithMultiInjectConstructors implements Component {
+                @Inject
+                public ComponentWithMultiInjectConstructors(String name, Double value) {
+                }
+
+                @Inject
+                public ComponentWithMultiInjectConstructors(String name) {
+                }
+            }
+
             @Test
             public void should_throw_exception_if_multi_inject_constructors_provided() {
                 assertThrows(IllegalComponentException.class, () ->
                         new InjectionProvider<>(ComponentWithMultiInjectConstructors.class));
+            }
+
+            static class ComponentWithNoInjectConstructorNorDefaultConstructor implements Component {
+                public ComponentWithNoInjectConstructorNorDefaultConstructor(String name) {
+                }
             }
 
             @Test
