@@ -79,13 +79,7 @@ class InjectionProvider<T> implements ContextConfig.ComponentProvider<T> {
 
         if (injectConstructors.size() > 1) throw new IllegalComponentException();
 
-        return (Constructor<Type>) injectConstructors.stream().findFirst().orElseGet(() -> {
-            try {
-                return implementation.getDeclaredConstructor();
-            } catch (NoSuchMethodException e) {
-                throw new IllegalComponentException();
-            }
-        });
+        return (Constructor<Type>) injectConstructors.stream().findFirst().orElseGet(() -> defaultConstructor(implementation));
     }
 
     @Override
@@ -119,5 +113,13 @@ class InjectionProvider<T> implements ContextConfig.ComponentProvider<T> {
 
     private static Object toDependency(Context context, Field field) {
         return context.get(field.getType()).get();
+    }
+
+    private static <Type> Constructor<Type> defaultConstructor(Class<Type> implementation) {
+        try {
+            return implementation.getDeclaredConstructor();
+        } catch (NoSuchMethodException e) {
+            throw new IllegalComponentException();
+        }
     }
 }
