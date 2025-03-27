@@ -283,6 +283,17 @@ public class ContainerTest {
             ConstructorInjectionProvider<InjectMethodWithDependency> provider = new ConstructorInjectionProvider<>(InjectMethodWithDependency.class);
             assertArrayEquals(new Class<?>[]{Dependency.class}, provider.getDependencies().toArray(Class<?>[]::new));
         }
+
+        static class InjectMethodWithParameter {
+            @Inject
+            <T> void install() {
+            }
+        }
+
+        @Test
+        public void should_throw_exception_if_inject_method_has_type_parameter() {
+            assertThrows(IllegalComponentException.class, () -> new ConstructorInjectionProvider<>(InjectMethodWithParameter.class));
+        }
     }
 }
 
