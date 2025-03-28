@@ -26,7 +26,7 @@
     - [x] 可从容器中获取依赖的 Provider
     - [x] 注入构造函数中可以声明对于 Provider 的依赖
     - [ ] 注入字段中可以声明对于 Provider 的依赖
-    - [ ] 注入方法中可声明对于 Provider 的依赖
+    - [x] 注入方法中可声明对于 Provider 的依赖
 - 自定义 Qualifier 的依赖
     - [ ] 注册组件时，可额外指定 Qualifier
     - [ ] 注册组件时，可从类对象上提取 Qualifier
