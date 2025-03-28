@@ -78,6 +78,11 @@ class InjectionProvider<T> implements ContextConfig.ComponentProvider<T> {
                 injectMethods.stream().flatMap(m -> stream(m.getParameterTypes()))).toList();
     }
 
+    @Override
+    public List<Type> getDependencyTypes() {
+        return stream(injectConstructor.getParameters()).map(Parameter::getParameterizedType).toList();
+    }
+
     private static <T extends AnnotatedElement> Stream<T> injectable(T[] declaredFields) {
         return stream(declaredFields).filter(f -> f.isAnnotationPresent(Inject.class));
     }
