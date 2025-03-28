@@ -23,19 +23,23 @@ public class ContextConfig {
     public Context getContext() {
         providers.keySet().forEach(component -> checkDependencies(component, new Stack<>()));
         return new Context() {
-            @Override
-            public <Type> Optional<Type> get(Class<Type> type) {
-                return Optional.ofNullable(providers.get(type)).map(provider -> (Type) provider.get(this));
-            }
-
-            @Override
-            public Optional get(ParameterizedType type) {
+            private Optional get(ParameterizedType type) {
                 if (type.getRawType() != Provider.class) {
                     return Optional.empty();
                 }
                 Class<?> componentType = (Class<?>) type.getActualTypeArguments()[0];
                 return Optional.ofNullable(providers.get(componentType))
                         .map(provider -> (Provider<Object>) () -> provider.get(this));
+            }
+
+            private  <Type> Optional<Type> get(Class<Type> type) {
+                return Optional.ofNullable(providers.get(type)).map(provider -> (Type) provider.get(this));
+            }
+
+            @Override
+            public Optional get(Type type) {
+                if (type instanceof ParameterizedType) return get((ParameterizedType) type);
+                return get((Class<?>) type);
             }
         };
     }
