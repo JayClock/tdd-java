@@ -72,14 +72,7 @@ class InjectionProvider<T> implements ContextConfig.ComponentProvider<T> {
     }
 
     @Override
-    public List<Class<?>> getDependencies() {
-        return concat(concat(stream(injectConstructor.getParameters()).map(Parameter::getType),
-                        injectFields.stream().map(Field::getType)),
-                injectMethods.stream().flatMap(m -> stream(m.getParameterTypes()))).toList();
-    }
-
-    @Override
-    public List<Type> getDependencyTypes() {
+    public List<Type> getDependencies() {
         return concat(concat(stream(injectConstructor.getParameters()).map(Parameter::getParameterizedType),
                         injectFields.stream().map(Field::getGenericType)),
                 injectMethods.stream().flatMap(m -> stream(m.getParameters()).map(Parameter::getParameterizedType))).toList();
@@ -102,17 +95,16 @@ class InjectionProvider<T> implements ContextConfig.ComponentProvider<T> {
     }
 
     private static Object[] toDependencies(Context context, Executable executable) {
-        return stream(executable.getParameters()).map(p -> {
-            Type type = p.getParameterizedType();
-            if (type instanceof ParameterizedType) return context.get((ParameterizedType) type).get();
-            return context.get((Class<?>) type).get();
-        }).toArray();
+        return stream(executable.getParameters()).map(p -> toDependency(context, p.getParameterizedType())).toArray();
+    }
+
+    private static Object toDependency(Context context, Type type) {
+        if (type instanceof ParameterizedType) return context.get((ParameterizedType) type).get();
+        return context.get((Class<?>) type).get();
     }
 
     private static Object toDependency(Context context, Field field) {
-        Type type = field.getGenericType();
-        if (type instanceof ParameterizedType) return context.get((ParameterizedType) type).get();
-        return context.get((Class<?>) type).get();
+        return toDependency(context, field.getGenericType());
     }
 
     private static <Type> Constructor<Type> defaultConstructor(Class<Type> implementation) {
