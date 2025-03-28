@@ -149,7 +149,10 @@ public class ContextTest {
         public static Stream<Arguments> should_throw_exception_if_dependency_not_found() {
             return Stream.of(Arguments.of(Named.of("Inject Constructor", MissingDependencyConstructor.class)),
                     Arguments.of(Named.of("Inject Field", MissingDependencyField.class)),
-                    Arguments.of(Named.of("Inject Method", MissingDependencyMethod.class)));
+                    Arguments.of(Named.of("Inject Method", MissingDependencyMethod.class)),
+                    Arguments.of(Named.of("Provider in Inject Constructor", MissingDependencyProviderConstructor.class)),
+                    Arguments.of(Named.of("Provider in Inject Field", MissingDependencyProviderField.class)),
+                    Arguments.of(Named.of("Provider in Inject Method", MissingDependencyProviderMethod.class)));
         }
 
         static class MissingDependencyConstructor implements Component {
@@ -166,6 +169,23 @@ public class ContextTest {
         static class MissingDependencyMethod implements Component {
             @Inject
             void install(Dependency dependency) {
+            }
+        }
+
+        static class MissingDependencyProviderConstructor implements Component {
+            @Inject
+            public MissingDependencyProviderConstructor(Provider<Dependency> dependency) {
+            }
+        }
+
+        static class MissingDependencyProviderField implements Component {
+            @Inject
+            Provider<Dependency> dependency;
+        }
+
+        static class MissingDependencyProviderMethod implements Component {
+            @Inject
+            void install(Provider<Dependency> dependency) {
             }
         }
 
