@@ -7,24 +7,40 @@ import java.util.Optional;
 
 public interface Context {
 
-    Optional get(Ref ref);
+    <ComponentType> Optional<ComponentType> get(Ref<ComponentType> ref);
 
-    class Ref {
+    class Ref<ComponentType> {
+        static <ComponentType> Ref<ComponentType> of(Class<ComponentType> component) {
+            return new Ref<>(component);
+        }
+
         static Ref of(Type type) {
-            if (type instanceof ParameterizedType container) return new Ref(container);
-            else return new Ref((Class<?>) type);
+            return new Ref<>(type);
         }
 
         private Type container;
-        private final Class<?> component;
+        private Class<?> component;
 
-        Ref(ParameterizedType container) {
-            this.container = container.getRawType();
-            this.component = (Class<?>) container.getActualTypeArguments()[0];
+        Ref(Type type) {
+            init(type);
         }
 
-        Ref(Class<?> component) {
-            this.component = component;
+        Ref(Class<ComponentType> component) {
+            init(component);
+        }
+
+        protected Ref() {
+            Type type = ((ParameterizedType) getClass().getGenericSuperclass()).getActualTypeArguments()[0];
+            init(type);
+        }
+
+        private void init(Type type) {
+            if (type instanceof ParameterizedType container) {
+                this.container = container.getRawType();
+                this.component = (Class<?>) container.getActualTypeArguments()[0];
+            } else {
+                this.component = (Class<?>) type;
+            }
         }
 
         public Type getContainer() {
