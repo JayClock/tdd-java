@@ -2,7 +2,6 @@ package di.container;
 
 import jakarta.inject.Provider;
 
-import java.lang.reflect.Type;
 import java.util.*;
 
 import static java.util.List.of;
@@ -36,8 +35,7 @@ public class ContextConfig {
     }
 
     private void checkDependencies(Class<?> component, Stack<Class<?>> visiting) {
-        for (Type dependency : providers.get(component).getDependencies()) {
-            Context.Ref ref = Context.Ref.of(dependency);
+        for (Context.Ref ref : providers.get(component).getDependencies()) {
             if (!providers.containsKey(ref.getComponent()))
                 throw new DependencyNotFoundException(ref.getComponent(), component);
             if (!ref.isContainer()) {
@@ -52,7 +50,7 @@ public class ContextConfig {
     interface ComponentProvider<T> {
         T get(Context context);
 
-        default List<Type> getDependencies() {
+        default List<Context.Ref> getDependencies() {
             return of();
         }
     }
