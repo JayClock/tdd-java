@@ -10,6 +10,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
+import java.lang.annotation.Annotation;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -124,6 +125,19 @@ public class ContextTest {
             Context context = config.getContext();
             assertFalse(context.get(new Context.Ref<List<Component>>() {
             }).isPresent());
+        }
+
+        @Nested
+        public class WithQualifier {
+            @Test
+            public void should_bind_instance_with_qualifier() {
+                Component instance = new Component() {
+                };
+                config.bind(Component.class, instance, new NamedLiteral("ChosenOne"));
+                Context context = config.getContext();
+                Component chosenOne = context.get(Context.Ref.of(Component.class, new NamedLiteral("ChosenOne"))).get();
+                assertSame(instance, chosenOne);
+            }
         }
     }
 
@@ -320,3 +334,11 @@ public class ContextTest {
         }
     }
 }
+
+record NamedLiteral(String value) implements jakarta.inject.Named {
+    @Override
+    public Class<? extends Annotation> annotationType() {
+        return jakarta.inject.Named.class;
+    }
+}
+

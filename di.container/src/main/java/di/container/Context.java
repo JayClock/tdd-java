@@ -1,5 +1,6 @@
 package di.container;
 
+import java.lang.annotation.Annotation;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.Objects;
@@ -14,15 +15,21 @@ public interface Context {
             return new Ref<>(component);
         }
 
+        static <ComponentType> Ref<ComponentType> of(Class<ComponentType> component, Annotation qualifier) {
+            return new Ref<>(component, qualifier);
+        }
+
         static Ref of(Type type) {
-            return new Ref<>(type);
+            return new Ref<>(type, null);
         }
 
         private Type container;
         private Class<?> component;
+        private Annotation qualifier;
 
-        Ref(Type type) {
+        Ref(Type type, Annotation qualifier) {
             init(type);
+            this.qualifier = qualifier;
         }
 
         Ref(Class<ComponentType> component) {
@@ -49,6 +56,10 @@ public interface Context {
 
         public Class<?> getComponent() {
             return component;
+        }
+
+        public Annotation getQualifier() {
+            return qualifier;
         }
 
         public boolean isContainer() {

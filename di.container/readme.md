@@ -31,10 +31,21 @@
     - [x] 将字段中的 Provider 加入依赖
     - [x] 将方法中的 Provider 加入依赖
 - 自定义 Qualifier 的依赖
-    - [ ] 注册组件时，可额外指定 Qualifier
-    - [ ] 注册组件时，可从类对象上提取 Qualifier
-    - [ ] 寻找依赖时，需同时满足类型与自定义 Qualifier 标注
-    - [ ] 支持默认 Qualifier——Named
+    - 注册组件时，可额外指定 Qualifier
+      - [x] 针对 instance 指定一个 Qualifier
+      - [ ] 针对组件指定一个 Qualifier
+      - [ ] 针对instance 指定多个 Qualifier
+      - [ ] 针对组件指定多个 Qualifier
+    - 注册组件时，如果不是合法的 Qualifier，则不接受组件注册
+    - 寻找依赖时，需同时满足类型与自定义 Qualifier 标注
+      - [ ] 在检查依赖时使用 Qualifier
+      - [ ] 在检查循环依赖时使用 Qualifier
+      - [ ] 构造函数注入可以使用 Qualifier 声明依赖
+        - 如果不是合法的 Qualifier，则组件非法
+      - [ ] 字段注入可以使用 Qualifier 声明依赖
+        - 如果不是合法的 Qualifier，则组件非法
+      - [ ] 函数注入可以使用 Qualifier 声明依赖
+        - 如果不是合法的 Qualifier，则组件非法
 #### 生命周期管理
 - Singleton 生命周期
     - [ ] 注册组件时，可额外指定是否为 Singleton
