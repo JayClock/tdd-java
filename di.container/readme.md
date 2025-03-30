@@ -33,7 +33,7 @@
 - 自定义 Qualifier 的依赖
     - 注册组件时，可额外指定 Qualifier
       - [x] 针对 instance 指定一个 Qualifier
-      - [ ] 针对组件指定一个 Qualifier
+      - [x] 针对组件指定一个 Qualifier
       - [ ] 针对instance 指定多个 Qualifier
       - [ ] 针对组件指定多个 Qualifier
     - 注册组件时，如果不是合法的 Qualifier，则不接受组件注册

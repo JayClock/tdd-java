@@ -27,6 +27,11 @@ public class ContextConfig {
         providers.put(type, new InjectionProvider<>(implementation));
     }
 
+    public <Type, Implementation extends Type>
+    void bind(Class<Type> type, Class<Implementation> implementation, Annotation qualifier) {
+        components.put(new Component(type, qualifier), new InjectionProvider<>(implementation));
+    }
+
     public Context getContext() {
         providers.keySet().forEach(component -> checkDependencies(component, new Stack<>()));
         return new Context() {

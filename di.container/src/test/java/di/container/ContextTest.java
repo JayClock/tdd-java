@@ -138,6 +138,20 @@ public class ContextTest {
                 Component chosenOne = context.get(Context.Ref.of(Component.class, new NamedLiteral("ChosenOne"))).get();
                 assertSame(instance, chosenOne);
             }
+
+            @Test
+            public void should_bind_component_with_qualifier() {
+                Dependency dependency = new Dependency() {
+                };
+                config.bind(Dependency.class, dependency);
+                config.bind(InjectionTest.ConstructorInjection.Injection.InjectConstructor.class,
+                        InjectionTest.ConstructorInjection.Injection.InjectConstructor.class,
+                        new NamedLiteral("ChosenOne")
+                );
+                Context context = config.getContext();
+                InjectionTest.ConstructorInjection.Injection.InjectConstructor chosenOne = context.get(Context.Ref.of(InjectionTest.ConstructorInjection.Injection.InjectConstructor.class, new NamedLiteral("ChosenOne"))).get();
+                assertSame(dependency, chosenOne.dependency);
+            }
         }
     }
 
