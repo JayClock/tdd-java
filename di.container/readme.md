@@ -39,7 +39,7 @@
     - 注册组件时，如果不是合法的 Qualifier，则不接受组件注册
     - 寻找依赖时，需同时满足类型与自定义 Qualifier 标注
       - [x] 在检查依赖时使用 Qualifier
-      - [ ] 在检查循环依赖时使用 Qualifier
+      - [x] 在检查循环依赖时使用 Qualifier
       - 构造函数注入可以使用 Qualifier 声明依赖
         - [x] 依赖中包含 Qualifier
         - [ ] 如果不是合法的 Qualifier，则组件非法
