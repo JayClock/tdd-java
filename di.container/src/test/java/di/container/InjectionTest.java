@@ -1,6 +1,7 @@
 package di.container;
 
 import jakarta.inject.Inject;
+import jakarta.inject.Named;
 import jakarta.inject.Provider;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
@@ -135,6 +136,22 @@ public class InjectionTest {
                 );
             }
         }
+
+        @Nested
+        public class WithQualifier {
+            static class InjectConstructor {
+                @Inject
+                public InjectConstructor(@Named("ChosenOne") Dependency dependency) {
+                }
+            }
+
+            @Test
+            public void should_include_qualifier_with_dependency() {
+                InjectionProvider<InjectConstructor> provider = new InjectionProvider<>(InjectConstructor.class);
+                assertArrayEquals(new ComponentRef[]{ComponentRef.of(Dependency.class, new NamedLiteral("ChosenOne"))},
+                        provider.getDependencies().toArray());
+            }
+        }
     }
 
     @Nested
@@ -164,7 +181,7 @@ public class InjectionTest {
             @Test
             public void should_include_dependency_from_field_dependency() {
                 InjectionProvider<ComponentWithFieldInjection> provider = new InjectionProvider<>(ComponentWithFieldInjection.class);
-                    assertArrayEquals(new ComponentRef[]{ComponentRef.of(Dependency.class)}, provider.getDependencies().toArray());
+                assertArrayEquals(new ComponentRef[]{ComponentRef.of(Dependency.class)}, provider.getDependencies().toArray());
             }
 
             @Test

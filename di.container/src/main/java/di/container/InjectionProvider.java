@@ -1,7 +1,9 @@
 package di.container;
 
 import jakarta.inject.Inject;
+import jakarta.inject.Qualifier;
 
+import java.lang.annotation.Annotation;
 import java.lang.reflect.*;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -73,10 +75,16 @@ class InjectionProvider<T> implements ContextConfig.ComponentProvider<T> {
 
     @Override
     public List<ComponentRef> getDependencies() {
-        return concat(concat(stream(injectConstructor.getParameters()).map(Parameter::getParameterizedType),
-                        injectFields.stream().map(Field::getGenericType)),
-                injectMethods.stream().flatMap(m -> stream(m.getParameters()).map(Parameter::getParameterizedType)))
-                .map(ComponentRef::of).toList();
+        return concat(concat(stream(injectConstructor.getParameters()).map(InjectionProvider::toComponentRef),
+                        injectFields.stream().map(Field::getGenericType).map(ComponentRef::of)),
+                injectMethods.stream().flatMap(m -> stream(m.getParameters()).map(Parameter::getParameterizedType).map(ComponentRef::of)))
+                .toList();
+    }
+
+    private static ComponentRef<?> toComponentRef(Parameter p) {
+        Annotation qualifier = stream(p.getAnnotations()).filter(a -> a.annotationType().isAnnotationPresent(Qualifier.class))
+                .findFirst().orElse(null);
+        return ComponentRef.of(p.getParameterizedType(), qualifier);
     }
 
     private static <T extends AnnotatedElement> Stream<T> injectable(T[] declaredFields) {

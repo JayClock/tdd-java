@@ -1,19 +1,20 @@
 package di.container;
 
 public class DependencyNotFoundException extends RuntimeException {
-    private final Class<?> dependency;
-    private final Class<?> component;
 
-    public DependencyNotFoundException(Class<?> dependency, Class<?> component) {
+    private final Component component;
+    private final Component dependency;
+
+    public DependencyNotFoundException(Component component, Component dependency) {
         this.dependency = dependency;
         this.component = component;
     }
 
-    public Class<?> getDependency() {
-        return dependency;
+    public Component getComponent() {
+        return component;
     }
 
-    public Class<?> getComponent() {
-        return component;
+    public Component getDependency() {
+        return dependency;
     }
 }
