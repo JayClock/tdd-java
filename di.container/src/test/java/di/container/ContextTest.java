@@ -161,6 +161,21 @@ public class ContextTest {
                 assertSame(dependency, chosenOne.dependency);
                 assertSame(dependency, skywalker.dependency);
             }
+
+            @Test
+            public void should_throw_exception_if_illegal_qualifier_given_to_instance() {
+                TestComponent instance = new TestComponent() {
+                };
+                assertThrows(IllegalComponentException.class, () -> config.bind(TestComponent.class, instance, new TestLiteral()));
+            }
+
+            @Test
+            public void should_throw_exception_if_illegal_qualifier_given_to_component() {
+                assertThrows(IllegalComponentException.class, () -> config.bind(InjectionTest.ConstructorInjection.Injection.InjectConstructor.class,
+                        InjectionTest.ConstructorInjection.Injection.InjectConstructor.class,
+                        new TestLiteral()
+                ));
+            }
         }
     }
 
@@ -375,5 +390,12 @@ record SkywalkerLiteral() implements Skywalker {
     @Override
     public Class<? extends Annotation> annotationType() {
         return Skywalker.class;
+    }
+}
+
+record TestLiteral() implements Test {
+    @Override
+    public Class<? extends Annotation> annotationType() {
+        return Test.class;
     }
 }
