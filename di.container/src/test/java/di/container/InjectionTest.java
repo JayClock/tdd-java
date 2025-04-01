@@ -146,7 +146,7 @@ public class InjectionTest {
             }
 
             @Test
-            public void should_include_qualifier_with_dependency() {
+            public void should_include_dependency_with_qualifier() {
                 InjectionProvider<InjectConstructor> provider = new InjectionProvider<>(InjectConstructor.class);
                 assertArrayEquals(new ComponentRef[]{ComponentRef.of(Dependency.class, new NamedLiteral("ChosenOne"))},
                         provider.getDependencies().toArray());
@@ -212,6 +212,21 @@ public class InjectionTest {
             @Test
             public void should_throw_exception_if_inject_field_is_final() {
                 assertThrows(IllegalComponentException.class, () -> new InjectionProvider<>(FinalInjectField.class));
+            }
+        }
+
+        @Nested
+        public class WithField {
+            static class InjectField {
+                @Inject
+                @Named("ChosenOne") Dependency dependency;
+            }
+
+            @Test
+            public void should_include_dependency_with_qualifier() {
+                InjectionProvider<InjectField> provider = new InjectionProvider<>(InjectField.class);
+                assertArrayEquals(new ComponentRef[]{ComponentRef.of(Dependency.class, new NamedLiteral("ChosenOne"))},
+                        provider.getDependencies().toArray());
             }
         }
     }
@@ -339,6 +354,22 @@ public class InjectionTest {
             @Test
             public void should_throw_exception_if_inject_method_has_type_parameter() {
                 assertThrows(IllegalComponentException.class, () -> new InjectionProvider<>(InjectMethodWithParameter.class));
+            }
+        }
+
+        @Nested
+        public class WithQualifier {
+            static class InjectMethod {
+                @Inject
+                void install(@Named("ChosenOne") Dependency dependency) {
+                }
+            }
+
+            @Test
+            public void should_include_dependency_with_qualifier() {
+                InjectionProvider<InjectMethod> provider = new InjectionProvider<>(InjectMethod.class);
+                assertArrayEquals(new ComponentRef[]{ComponentRef.of(Dependency.class, new NamedLiteral("ChosenOne"))},
+                        provider.getDependencies().toArray());
             }
         }
     }
