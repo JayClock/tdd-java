@@ -42,13 +42,13 @@
       - [x] 在检查循环依赖时使用 Qualifier
       - 构造函数注入可以使用 Qualifier 声明依赖
         - [x] 依赖中包含 Qualifier
-        - [ ] 如果不是合法的 Qualifier，则组件非法
+        - [x] 如果不是合法的 Qualifier，则组件非法
       - 字段注入可以使用 Qualifier 声明依赖
-        - [ ] 依赖中包含 Qualifier 
-        - [ ] 如果不是合法的 Qualifier，则组件非法
+        - [x] 依赖中包含 Qualifier 
+        - [x] 如果不是合法的 Qualifier，则组件非法
       - 函数注入可以使用 Qualifier 声明依赖
-        - [ ] 依赖中包含 Qualifier
-        - [ ] 如果不是合法的 Qualifier，则组件非法
+        - [x] 依赖中包含 Qualifier
+        - [x] 如果不是合法的 Qualifier，则组件非法
 #### 生命周期管理
 - Singleton 生命周期
     - [ ] 注册组件时，可额外指定是否为 Singleton

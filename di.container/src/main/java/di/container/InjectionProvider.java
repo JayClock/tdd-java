@@ -2,6 +2,7 @@ package di.container;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Qualifier;
+import jdk.jfr.AnnotationElement;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.*;
@@ -35,6 +36,8 @@ class InjectionProvider<T> implements ContextConfig.ComponentProvider<T> {
         if (injectMethods.stream().anyMatch(m -> m.getTypeParameters().length != 0)) {
             throw new IllegalComponentException();
         }
+
+        getDependencies();
     }
 
     @Override
@@ -85,18 +88,14 @@ class InjectionProvider<T> implements ContextConfig.ComponentProvider<T> {
         return ComponentRef.of(field.getGenericType(), getQualifier(field));
     }
 
-    private static Annotation getQualifier(Field field) {
-        return stream(field.getAnnotations()).filter(a -> a.annotationType().isAnnotationPresent(Qualifier.class))
-                .findFirst().orElse(null);
-    }
-
     private ComponentRef<?> toComponentRef(Parameter parameter) {
         return ComponentRef.of(parameter.getParameterizedType(), getQualifier(parameter));
     }
 
-    private static Annotation getQualifier(Parameter parameter) {
-        return stream(parameter.getAnnotations()).filter(a -> a.annotationType().isAnnotationPresent(Qualifier.class))
-                .findFirst().orElse(null);
+    private static Annotation getQualifier(AnnotatedElement parameter) {
+        List<Annotation> qualifiers = stream(parameter.getAnnotations()).filter(a -> a.annotationType().isAnnotationPresent(Qualifier.class)).toList();
+        if (qualifiers.size() > 1) throw new IllegalComponentException();
+        return qualifiers.stream().findFirst().orElse(null);
     }
 
     private static <T extends AnnotatedElement> Stream<T> injectable(T[] declaredFields) {
