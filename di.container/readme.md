@@ -52,8 +52,10 @@
 #### 生命周期管理
 - Singleton 生命周期
     - [ ] 注册组件时，可额外指定是否为 Singleton
+    - [ ] 注册包含 Qualifier 的组件时，可额外指定是否为 Singleton
     - [ ] 注册组件时，可从类对象上提取 Singleton 标注
-    - [ ] 对于包含 Singleton 标注的组件，在容器范围内提供唯一实例
-    - [ ] 容器组件默认不是 Single 生命周期
+    - [x] 容器组件默认不是 Single 生命周期
+    - [x] 包含 Qualifier 的组件默认不是 Single 生命周期
+    - [ ] 对于包含 Scope 的组件，检测依赖关系
 - 自定义 Scope 标注
     - [] 可向容器注册自定义 Scope 标注的回调

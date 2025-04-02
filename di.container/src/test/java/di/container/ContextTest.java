@@ -178,6 +178,29 @@ public class ContextTest {
                 ));
             }
         }
+
+        @Nested
+        public class WithScope {
+            static class NotSingleton {
+            }
+
+            @Test
+            public void should_not_be_singleton_scope_by_default() {
+                config.bind(NotSingleton.class, NotSingleton.class);
+                Context context = config.getContext();
+                assertNotSame(context.get(ComponentRef.of(NotSingleton.class)), context.get(ComponentRef.of(NotSingleton.class)));
+            }
+
+            @Nested
+            public class WithQualifier {
+                @Test
+                public void should_not_be_singleton_scope_by_default() {
+                    config.bind(NotSingleton.class, NotSingleton.class, new SkywalkerLiteral());
+                    Context context = config.getContext();
+                    assertNotSame(context.get(ComponentRef.of(NotSingleton.class, new SkywalkerLiteral())), context.get(ComponentRef.of(NotSingleton.class, new SkywalkerLiteral())));
+                }
+            }
+        }
     }
 
     @Nested
@@ -429,7 +452,7 @@ record NamedLiteral(String value) implements jakarta.inject.Named {
 
     @Override
     public int hashCode() {
-        return "value".hashCode() *127 ^ value.hashCode();
+        return "value".hashCode() * 127 ^ value.hashCode();
     }
 }
 
