@@ -199,6 +199,17 @@ public class ContextTest {
                 assertSame(context.get(ComponentRef.of(NotSingleton.class)).get(), context.get(ComponentRef.of(NotSingleton.class)).get());
             }
 
+            @Singleton
+            static class SingletonAnnotated {
+            }
+
+            @Test
+            public void should_retrieve_scope_annotation_from_component() {
+                config.bind(SingletonAnnotated.class, SingletonAnnotated.class);
+                Context context = config.getContext();
+                assertSame(context.get(ComponentRef.of(SingletonAnnotated.class)).get(), context.get(ComponentRef.of(SingletonAnnotated.class)).get());
+            }
+
             @Nested
             public class WithQualifier {
                 @Test
@@ -213,6 +224,13 @@ public class ContextTest {
                     config.bind(NotSingleton.class, NotSingleton.class, new SingletonLiteral(), new SkywalkerLiteral());
                     Context context = config.getContext();
                     assertSame(context.get(ComponentRef.of(NotSingleton.class, new SkywalkerLiteral())).get(), context.get(ComponentRef.of(NotSingleton.class, new SkywalkerLiteral())).get());
+                }
+
+                @Test
+                public void should_retrieve_scope_annotation_from_component() {
+                    config.bind(SingletonAnnotated.class, SingletonAnnotated.class, new SkywalkerLiteral());
+                    Context context = config.getContext();
+                    assertSame(context.get(ComponentRef.of(SingletonAnnotated.class, new SkywalkerLiteral())).get(), context.get(ComponentRef.of(SingletonAnnotated.class, new SkywalkerLiteral())).get());
                 }
             }
         }
