@@ -3,14 +3,21 @@ package di.container;
 import jakarta.inject.Provider;
 import jakarta.inject.Qualifier;
 import jakarta.inject.Scope;
+import jakarta.inject.Singleton;
 
 import java.lang.annotation.Annotation;
 import java.util.*;
+import java.util.function.Function;
 
 import static java.util.List.of;
 
 public class ContextConfig {
     private final Map<Component, ComponentProvider<?>> components = new HashMap<Component, ComponentProvider<?>>();
+    private final Map<Class<?>, Function<ComponentProvider<?>, ComponentProvider<?>>> scopes = new HashMap<>();
+
+    public ContextConfig() {
+        scope(Singleton.class, SingletonProvider::new);
+    }
 
     public <Type> void bind(Class<Type> type, Type instance) {
         components.put(new Component(type, null), context -> instance);
@@ -38,8 +45,8 @@ public class ContextConfig {
         List<Annotation> qualifiers = Arrays.stream(annotations).filter(a -> a.annotationType().isAnnotationPresent(Qualifier.class)).toList();
         Optional<Annotation> scope = Arrays.stream(annotations).filter(a -> a.annotationType().isAnnotationPresent(Scope.class)).findFirst().or(() -> scopeFromType);
 
-        ComponentProvider<Implementation> injectionProvider = new InjectionProvider<>(implementation);
-        ComponentProvider<Implementation> provider = scope.map(s -> (ComponentProvider<Implementation>) new SingletonProvider<>(injectionProvider)).orElse(injectionProvider);
+        ComponentProvider<?> injectionProvider = new InjectionProvider<>(implementation);
+        ComponentProvider<?> provider = scope.<ComponentProvider<?>>map(s -> getScopeProvider(s, injectionProvider)).orElse(injectionProvider);
 
         if (qualifiers.isEmpty()) components.put(new Component(type, null), provider);
         for (Annotation qualifier : qualifiers) {
@@ -47,18 +54,31 @@ public class ContextConfig {
         }
     }
 
+    private ComponentProvider<?> getScopeProvider(Annotation scope, ComponentProvider<?> provider) {
+        return scopes.get(scope.annotationType()).apply(provider);
+    }
+
+    public <ScopeType extends Annotation> void scope(Class<ScopeType> scope, Function<ComponentProvider<?>, ComponentProvider<?>> provider) {
+        scopes.put(scope, provider);
+    }
+
     static class SingletonProvider<T> implements ComponentProvider<T> {
         private T singleton;
-        private ComponentProvider<T> provider;
+        private final ComponentProvider<T> provider;
 
-        public SingletonProvider(T singleton) {
-            this.singleton = singleton;
+        public SingletonProvider(ComponentProvider<T> provider) {
+            this.provider = provider;
         }
 
         @Override
         public T get(Context context) {
             if (singleton == null) singleton = provider.get(context);
             return singleton;
+        }
+
+        @Override
+        public List<ComponentRef<?>> getDependencies() {
+            return provider.getDependencies();
         }
     }
 

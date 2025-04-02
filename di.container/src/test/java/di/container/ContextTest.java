@@ -1,9 +1,6 @@
 package di.container;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Provider;
-import jakarta.inject.Qualifier;
-import jakarta.inject.Singleton;
+import jakarta.inject.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Named;
 import org.junit.jupiter.api.Nested;
@@ -16,10 +13,8 @@ import java.lang.annotation.Annotation;
 import java.lang.annotation.Documented;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import static java.util.Arrays.asList;
@@ -180,11 +175,20 @@ public class ContextTest {
             }
         }
 
+        static class NotSingleton {
+        }
+
+        @Test
+        public void should_bind_component_as_customized_scope() {
+            config.scope(Pooled.class, PooledProvider::new);
+            config.bind(NotSingleton.class, NotSingleton.class, new PooledLiteral());
+            Context context = config.getContext();
+            List<Optional<NotSingleton>> instances = IntStream.range(0, 5).mapToObj(i -> context.get(ComponentRef.of(NotSingleton.class))).toList();
+            assertEquals(PooledProvider.MAX, new HashSet<>(instances).size());
+        }
+
         @Nested
         public class WithScope {
-            static class NotSingleton {
-            }
-
             @Test
             public void should_not_be_singleton_scope_by_default() {
                 config.bind(NotSingleton.class, NotSingleton.class);
@@ -254,7 +258,10 @@ public class ContextTest {
                     Arguments.of(Named.of("Inject Method", MissingDependencyMethod.class)),
                     Arguments.of(Named.of("Provider in Inject Constructor", MissingDependencyProviderConstructor.class)),
                     Arguments.of(Named.of("Provider in Inject Field", MissingDependencyProviderField.class)),
-                    Arguments.of(Named.of("Provider in Inject Method", MissingDependencyProviderMethod.class)));
+                    Arguments.of(Named.of("Provider in Inject Method", MissingDependencyProviderMethod.class)),
+                    Arguments.of(Named.of("Scoped", MissingDependencyScoped.class)),
+                    Arguments.of(Named.of("Scoped Provider", MissingDependencyProviderScoped.class))
+            );
         }
 
         static class MissingDependencyConstructor implements TestComponent {
@@ -290,6 +297,20 @@ public class ContextTest {
             void install(Provider<Dependency> dependency) {
             }
         }
+
+        @Singleton
+        static class MissingDependencyScoped implements TestComponent {
+            @Inject
+            Dependency dependency;
+        }
+
+        @Singleton
+        static class MissingDependencyProviderScoped implements TestComponent {
+            @Inject
+            void install(Provider<Dependency> dependency) {
+            }
+        }
+
 
         @ParameterizedTest(name = "cyclic dependency between {0} and {1}")
         @MethodSource
@@ -518,5 +539,41 @@ record SingletonLiteral() implements Singleton {
     @Override
     public Class<? extends Annotation> annotationType() {
         return Singleton.class;
+    }
+}
+
+@Scope
+@Documented
+@Retention(RetentionPolicy.RUNTIME)
+@interface Pooled {
+}
+
+record PooledLiteral() implements Pooled {
+    @Override
+    public Class<? extends Annotation> annotationType() {
+        return Pooled.class;
+    }
+}
+
+
+class PooledProvider<T> implements ContextConfig.ComponentProvider<T> {
+    static int MAX = 2;
+    private final List<T> pool = new ArrayList<>();
+    int current;
+    private final ContextConfig.ComponentProvider<T> provider;
+
+    public PooledProvider(ContextConfig.ComponentProvider<T> provider) {
+        this.provider = provider;
+    }
+
+    @Override
+    public T get(Context context) {
+        if (pool.size() < MAX) pool.add(provider.get(context));
+        return pool.get(current++ % MAX);
+    }
+
+    @Override
+    public List<ComponentRef<?>> getDependencies() {
+        return provider.getDependencies();
     }
 }
