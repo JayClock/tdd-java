@@ -51,8 +51,8 @@
         - [x] 如果不是合法的 Qualifier，则组件非法
 #### 生命周期管理
 - Singleton 生命周期
-    - [ ] 注册组件时，可额外指定是否为 Singleton
-    - [ ] 注册包含 Qualifier 的组件时，可额外指定是否为 Singleton
+    - [x] 注册组件时，可额外指定是否为 Singleton
+    - [x] 注册包含 Qualifier 的组件时，可额外指定是否为 Singleton
     - [ ] 注册组件时，可从类对象上提取 Singleton 标注
     - [x] 容器组件默认不是 Single 生命周期
     - [x] 包含 Qualifier 的组件默认不是 Single 生命周期
