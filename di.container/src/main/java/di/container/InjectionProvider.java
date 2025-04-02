@@ -25,9 +25,9 @@ class InjectionProvider<T> implements ContextConfig.ComponentProvider<T> {
         if (Modifier.isAbstract(component.getModifiers())) {
             throw new IllegalComponentException();
         }
-        this.injectConstructor = Injectable.of(getInjectConstructor(component));
-        this.injectMethods = getInjectMethods(component).stream().map(Injectable::of).toList();
-        this.injectFields = getInjectFields(component).stream().map(Injectable::of).toList();
+        this.injectConstructor = getInjectConstructor(component);
+        this.injectMethods = getInjectMethods(component);
+        this.injectFields = getInjectFields(component);
 
         if (injectFields.stream().map(Injectable::element).anyMatch(f -> Modifier.isFinal(f.getModifiers()))) {
             throw new IllegalComponentException();
@@ -37,6 +37,7 @@ class InjectionProvider<T> implements ContextConfig.ComponentProvider<T> {
             throw new IllegalComponentException();
         }
     }
+
 
     @Override
     public T get(Context context) {
@@ -63,7 +64,7 @@ class InjectionProvider<T> implements ContextConfig.ComponentProvider<T> {
 
     static record Injectable<Element extends AccessibleObject>(Element element, ComponentRef<?>[] required) {
         static <Element extends Executable> Injectable<Element> of(Element constructor) {
-            return new Injectable<>(constructor, stream(constructor.getParameters()).map(InjectionProvider::toComponentRef).toArray(ComponentRef<?>[]::new));
+            return new Injectable<>(constructor, stream(constructor.getParameters()).map(Injectable::toComponentRef).toArray(ComponentRef<?>[]::new));
         }
 
         static Injectable<Field> of(Field field) {
@@ -73,27 +74,41 @@ class InjectionProvider<T> implements ContextConfig.ComponentProvider<T> {
         Object[] toDependencies(Context context) {
             return stream(required).map(context::get).map(Optional::get).toArray();
         }
+
+        private static ComponentRef<?> toComponentRef(Field field) {
+            return ComponentRef.of(field.getGenericType(), getQualifier(field));
+        }
+
+        private static ComponentRef<?> toComponentRef(Parameter parameter) {
+            return ComponentRef.of(parameter.getParameterizedType(), getQualifier(parameter));
+        }
+
+        private static Annotation getQualifier(AnnotatedElement parameter) {
+            List<Annotation> qualifiers = stream(parameter.getAnnotations()).filter(a -> a.annotationType().isAnnotationPresent(Qualifier.class)).toList();
+            if (qualifiers.size() > 1) throw new IllegalComponentException();
+            return qualifiers.stream().findFirst().orElse(null);
+        }
     }
 
-    private static <T> List<Field> getInjectFields(Class<T> component) {
-        return traverse(component, (current, fields) -> injectable(current.getDeclaredFields()).toList());
+    private static <T> Injectable<Constructor<T>> getInjectConstructor(Class<T> component) {
+        List<Constructor<?>> injectConstructors = injectable(component.getConstructors()).toList();
+
+        if (injectConstructors.size() > 1) throw new IllegalComponentException();
+
+        return Injectable.of((Constructor<T>) injectConstructors.stream().findFirst().orElseGet(() -> defaultConstructor(component)));
     }
 
-    private static <T> List<Method> getInjectMethods(Class<T> component) {
+    private static List<Injectable<Field>> getInjectFields(Class<?> component) {
+        return InjectionProvider.<Field>traverse(component, (current, fields) -> injectable(current.getDeclaredFields()).toList()).stream().map(Injectable::of).toList();
+    }
+
+    private static List<Injectable<Method>> getInjectMethods(Class<?> component) {
         List<Method> injectMethods = traverse(component, (methods, current) -> injectable(methods.getDeclaredMethods())
                 .filter(m -> isOverrideByInjectMethod(m, current))
                 .filter(m -> isOverrideByNoInjectMethod(component, m))
                 .toList());
         reverse(injectMethods);
-        return injectMethods;
-    }
-
-    private static <Type> Constructor<Type> getInjectConstructor(Class<Type> implementation) {
-        List<Constructor<?>> injectConstructors = injectable(implementation.getConstructors()).toList();
-
-        if (injectConstructors.size() > 1) throw new IllegalComponentException();
-
-        return (Constructor<Type>) injectConstructors.stream().findFirst().orElseGet(() -> defaultConstructor(implementation));
+        return injectMethods.stream().map(Injectable::of).toList();
     }
 
     private static <T extends AnnotatedElement> Stream<T> injectable(T[] declaredFields) {
@@ -110,32 +125,6 @@ class InjectionProvider<T> implements ContextConfig.ComponentProvider<T> {
 
     private static <T> boolean isOverrideByNoInjectMethod(Class<T> component, Method m) {
         return stream(component.getDeclaredMethods()).filter(m1 -> !m1.isAnnotationPresent(Inject.class)).noneMatch(o -> isOverride(m, o));
-    }
-
-    private static Object[] toDependencies(Context context, Executable executable) {
-        return stream(executable.getParameters()).map(p -> toDependency(context, toComponentRef(p))).toArray();
-    }
-
-    private static Object toDependency(Context context, ComponentRef of) {
-        return context.get(of).get();
-    }
-
-    private static Object toDependency(Context context, Field field) {
-        return toDependency(context, toComponentRef(field));
-    }
-
-    private static ComponentRef toComponentRef(Field field) {
-        return ComponentRef.of(field.getGenericType(), getQualifier(field));
-    }
-
-    private static ComponentRef<?> toComponentRef(Parameter parameter) {
-        return ComponentRef.of(parameter.getParameterizedType(), getQualifier(parameter));
-    }
-
-    private static Annotation getQualifier(AnnotatedElement parameter) {
-        List<Annotation> qualifiers = stream(parameter.getAnnotations()).filter(a -> a.annotationType().isAnnotationPresent(Qualifier.class)).toList();
-        if (qualifiers.size() > 1) throw new IllegalComponentException();
-        return qualifiers.stream().findFirst().orElse(null);
     }
 
     private static <Type> Constructor<Type> defaultConstructor(Class<Type> implementation) {
