@@ -16,7 +16,7 @@ import static java.util.Arrays.stream;
 import static java.util.Collections.reverse;
 import static java.util.stream.Stream.concat;
 
-class InjectionProvider<T> implements ContextConfig.ComponentProvider<T> {
+class InjectionProvider<T> implements ComponentProvider<T> {
     private final Injectable<Constructor<T>> injectConstructor;
     private final List<Injectable<Field>> injectFields;
     private final List<Injectable<Method>> injectMethods;
